@@ -81,7 +81,7 @@ function start(channel, user) {
         if(user.voice.channel) {
             check_token(user).then((result) => {
                 if(result) {
-                    start_session(user, channel)
+                    start_session(user, channel).then(()=>{sessions[channel]["last_message"] = "first"})
                 }
                 else {
                     channel.send(`Aucun token n'a été trouvé pour ${user}, renseignez le avec la commande t! token <token>`)
@@ -132,7 +132,7 @@ function remove_session(channel) {
 }
 
 function start_session(user, channel) {
-    requests.getUserData(users_tokens[user]).then(
+    return requests.getUserData(users_tokens[user]).then(
         (result) => {
             if(result.data.likes.likes_remaining === 0) {
                 channel.send(`${user} n'a pas de likes disponible, la session ne peut pas se lancer.`)
@@ -225,7 +225,7 @@ function vote(channel ,user, yes) {
 async function resolveMatch(channel) {
     let res = true
     let name = sessions[channel].last_match.name
-    if(sessions[channel].votes_no > sessions[channel].votes_yes) {
+    if(sessions[channel].votes_no >= sessions[channel].votes_yes) {
         channel.send(`Le vote à décider de skip ${name}.`)
         res = false
     } else {
@@ -240,7 +240,7 @@ async function resolveMatch(channel) {
 function skip(channel, user) {
     if(!sessions[channel]) {
         channel.send(`${user}, aucune session n'est en cours dans ce channel.`)
-    } else if(user === sessions[channel].user || user.permissions.has('ADMINISTRATOR')) {
+    } else if((user === sessions[channel].user || user.permissions.has('ADMINISTRATOR')) && sessions[channel]["last_message"] && (sessions[channel]["last_message"].reactions || sessions[channel]["last_message"] === "first")) {
         channel.send(`${user} passe au match suivant.`)
         resolveMatch(channel).then(()=>next_match(user, channel))
     } else {
