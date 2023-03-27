@@ -141,7 +141,7 @@ function start_session(user, channel) {
             if(result.data.likes.likes_remaining === 0) {
                 channel.send(`${user} n'a pas de likes disponible, la session ne peut pas se lancer.`)
             } else {
-                channel.send(`Une nouvelle session a été lancée par ${user}, rejoignez le salon vocal ${user.voice.channel.name} pour participer.`)
+                channel.send(`Une nouvelle session a été lancée par ${user}, rejoignez le salon vocal ${user.voice.channel.name} pour participer. Vous pouvez voter avec t! yes et t! no. Vous pouvez passer au match suivant avec t! skip.`)
                 new_match(user, channel)
                 compute_and_send_next_match(user, channel).then((result)=>{})
             }
@@ -335,20 +335,21 @@ const filter = (reaction, user) => {
 };
 
 client.on('messageReactionAdd', (reaction, user) => {
-    if(filter(reaction, user)) {
-        console.log("OK")
-        let channel = reaction.message.channel
-        if (reaction.emoji.name === '⬅️') {
-            sessions[channel]["pos_photo"]--
-        } else {
-            sessions[channel]["pos_photo"]++
+    try {
+        if(filter(reaction, user)) {
+            let channel = reaction.message.channel
+            if (reaction.emoji.name === '⬅️') {
+                sessions[channel]["pos_photo"]--
+            } else {
+                sessions[channel]["pos_photo"]++
+            }
+            if (sessions[channel]["pos_photo"] === -1) {
+                sessions[channel]["pos_photo"] = sessions[channel]["numPhotos"] - 1
+            }
+            if (sessions[channel]["pos_photo"] === sessions[channel]["numPhotos"]) {
+                sessions[channel]["pos_photo"] = 0
+            }
+            sessions[channel]['last_message'].edit({embeds: [sessions[channel]["embed"].setImage(sessions[channel]["photos"][sessions[channel]["pos_photo"]].processedFiles[0].url)]});
         }
-        if (sessions[channel]["pos_photo"] === -1) {
-            sessions[channel]["pos_photo"] = sessions[channel]["numPhotos"] - 1
-        }
-        if (sessions[channel]["pos_photo"] === sessions[channel]["numPhotos"]) {
-            sessions[channel]["pos_photo"] = 0
-        }
-        sessions[channel]['last_message'].edit({embeds: [sessions[channel]["embed"].setImage(sessions[channel]["photos"][sessions[channel]["pos_photo"]].processedFiles[0].url)]});
-    }
+    } catch(e) {}
 })
