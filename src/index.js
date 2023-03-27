@@ -107,7 +107,11 @@ function tinder_token(message, channel, user) {
 
     requests.getUserData(t).then((result) => {
         if(result.meta.status !== 401) {
-            message.delete()
+            try {
+                message.delete();
+            } catch(e) {
+                channel.send(`${user},/!\\ Je n'ai pas pu supprimer votre token, un usage malveillant peut en être fait par un autre utilisateur, deconnectez et reconnectez vous depuis votre navigateur. /!\\`)
+            }
             users_tokens[user] = t
             channel.send(`${user}, votre token est correcte et a bien été enregistré.`)
         } else {
